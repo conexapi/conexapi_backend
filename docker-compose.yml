@@ -1,0 +1,28 @@
+
+services:
+  db:
+    image: postgres:16
+    env_file: .env  # ← Usa variables del .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT}:5432"
+    restart: always
+
+
+  app:
+    build: .
+    env_file: .env  # ← Comparte las mismas variables
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    depends_on:
+      - db
+    volumes:
+      - .:/conexapi  # ← Monta la raíz del proyecto en /conexapi
+    working_dir: /conexapi  # ← Directorio de trabajo raíz
+    command: >
+      sh -c "uvicorn main:app --host ${APP_HOST} --port ${APP_PORT}"
+    restart: always  
+
+volumes:
+  postgres_data:
