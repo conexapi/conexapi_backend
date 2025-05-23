@@ -4,3 +4,4 @@ venv/
 *.pyc
 __pycache__/
 .vscode/ # Opcional, si no quieres subir configuraciones de VSCode
+conexapi_backend.code-workspace
