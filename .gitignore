@@ -1,2 +1,6 @@
-.env
+# Ejemplo de contenido para .gitignore
 venv/
+*.pyc
+__pycache__/
+.vscode/ # Opcional, si no quieres subir configuraciones de VSCode
+.env # Si usas un archivo .env para variables de entorno
