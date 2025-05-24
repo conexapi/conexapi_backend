@@ -5,9 +5,8 @@
 
 fastapi==0.111.0          # Framework para construir APIs rápidas.
 uvicorn==0.30.1           # Servidor web para ejecutar la aplicación FastAPI.
-sqlalchemy==2.0.30        # Herramienta para interactuar con bases de datos SQL de forma más sencilla.
-psycopg2-binary==2.9.10   # <-- ¡CAMBIO AQUÍ! Conector específico para bases de datos PostgreSQL,
-                          #     versión con wheels precompilados para Python 3.13.
+sqlalchemy==2.0.31        # <-- ¡CAMBIO AQUÍ! Versión actualizada para compatibilidad con Python 3.13
+psycopg2-binary==2.9.10   # Conector específico para bases de datos PostgreSQL.
 python-dotenv==1.0.1      # Para cargar variables de entorno desde un archivo .env.
 pydantic-settings==2.3.4  # Para gestionar la configuración de la aplicación de forma segura.
 passlib[bcrypt]==1.7.4    # Para cifrar contraseñas de forma segura.
