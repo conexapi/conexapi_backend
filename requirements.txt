@@ -12,6 +12,3 @@ python-dotenv==1.0.1      # Para cargar variables de entorno desde un archivo .e
 pydantic-settings==2.3.4  # Para gestionar la configuración de la aplicación de forma segura.
 passlib[bcrypt]==1.7.4    # Para cifrar contraseñas de forma segura.
 python-jose[cryptography]==3.3.0 # Para trabajar con tokens JWT (JSON Web Tokens).
-
-Edita tu archivo conexapi_backend/requirements.txt y cambia la línea de psycopg2-binary==2.9.9 a psycopg2-binary==2.9.10.
-Limpia la caché de pip (esto siempre ayuda a evitar problemas residuales):
