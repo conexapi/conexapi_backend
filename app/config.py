@@ -1,6 +1,6 @@
 # Ubicación: /conexapi/conexapi_backend/app/config.py
 # Propósito: Define cómo la aplicación carga y accede a las variables de entorno,
-#            como la cadena de conexión a la base de datos.
+#            como la cadena de conexión a la base de datos y la clave secreta de JWT.
 # Dependencias: pydantic-settings
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -11,14 +11,21 @@ class Settings(BaseSettings):
     #            Estas variables son cruciales para la configuración de la aplicación.
 
     database_url: str
-    # database_url (str): Aquí se almacenará la cadena de conexión a la base de datos.
-    #                     Pydantic Settings la leerá de la variable de entorno DATABASE_URL.
+    # database_url (str): Cadena de conexión a la base de datos.
+
+    secret_key: str  # <-- ¡NUEVA LÍNEA!
+    # secret_key (str): Clave secreta utilizada para firmar los tokens JWT.
+    #                   Debe ser una cadena de texto larga y aleatoria.
+
+    algorithm: str = "HS256" # <-- ¡NUEVA LÍNEA!
+    # algorithm (str): Algoritmo de cifrado para los tokens JWT (por defecto HS256).
+
+    access_token_expire_minutes: int = 30 # <-- ¡NUEVA LÍNEA!
+    # access_token_expire_minutes (int): Tiempo de expiración del token de acceso en minutos.
 
     model_config = SettingsConfigDict(
-        env_file=".env",       # Símbolo especial: env_file indica a Pydantic que lea de .env
-        extra="ignore"         # extra="ignore" ignora variables en .env que no estén definidas aquí.
+        env_file=".env",
+        extra="ignore"
     )
 
-# Símbolo especial: La instancia de la clase Settings se crea para ser importada
-#                   y usada en otras partes de la aplicación.
 settings = Settings()
