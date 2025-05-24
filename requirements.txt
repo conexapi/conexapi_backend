@@ -6,8 +6,13 @@
 fastapi==0.111.0          # Framework para construir APIs rápidas.
 uvicorn==0.30.1           # Servidor web para ejecutar la aplicación FastAPI.
 sqlalchemy==2.0.30        # Herramienta para interactuar con bases de datos SQL de forma más sencilla.
-psycopg2-binary==2.9.9    # Conector específico para bases de datos PostgreSQL.
+psycopg2-binary==2.9.10   # <-- ¡CAMBIO AQUÍ! Conector específico para bases de datos PostgreSQL,
+                          #     versión con wheels precompilados para Python 3.13.
 python-dotenv==1.0.1      # Para cargar variables de entorno desde un archivo .env.
 pydantic-settings==2.3.4  # Para gestionar la configuración de la aplicación de forma segura.
 passlib[bcrypt]==1.7.4    # Para cifrar contraseñas de forma segura.
 python-jose[cryptography]==3.3.0 # Para trabajar con tokens JWT (JSON Web Tokens).
+Instrucciones de implementación actualizadas:
+
+Edita tu archivo conexapi_backend/requirements.txt y cambia la línea de psycopg2-binary==2.9.9 a psycopg2-binary==2.9.10.
+Limpia la caché de pip (esto siempre ayuda a evitar problemas residuales):
