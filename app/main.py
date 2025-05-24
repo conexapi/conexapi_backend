@@ -1,24 +1,25 @@
 # Ubicación: /conexapi/conexapi_backend/app/main.py
 # Propósito: Es el punto de entrada principal para nuestra aplicación FastAPI.
-#            Aquí inicializamos FastAPI y ejecutamos operaciones de base de datos.
-# Dependencias: fastapi, database
+#            Aquí inicializamos FastAPI, ejecutamos operaciones de base de datos
+#            y "conectamos" los routers de nuestra API.
+# Dependencias: fastapi, app.database.database, app.api.auth
 
 from fastapi import FastAPI
 from app.database.database import create_db_and_tables
-from app.api import auth
+from app.api import auth # <-- ¡NUEVA LÍNEA! Importa el router de autenticación
 
 # Inicializa la aplicación FastAPI.
 app = FastAPI()
-app.include_router(auth.router)
+
+# Símbolo especial: app.include_router(). Conecta un router de FastAPI (como el de autenticación)
+#                   a la aplicación principal. Esto hace que todos los endpoints definidos
+#                   en 'auth.py' estén disponibles a través de nuestra API principal.
+app.include_router(auth.router) # <-- ¡NUEVA LÍNEA!
 
 @app.on_event("startup")
 async def startup_event():
     # Propósito: Función que se ejecuta automáticamente cuando la aplicación FastAPI arranca.
     #            Es el lugar ideal para tareas de inicialización, como crear las tablas de la base de datos.
-    # **: El operador "**" se usa en Python para pasar argumentos de palabras clave (keyword arguments)
-    #    a una función. Aquí no se usa directamente, pero se menciona como símbolo especial.
-    # *args: El operador "*" se usa para pasar un número variable de argumentos posicionales.
-    #        Aquí no se usa directamente, pero se menciona como símbolo especial.
     print("Iniciando la aplicación y creando tablas de base de datos...")
     create_db_and_tables()
     print("Aplicación iniciada. Tablas verificadas.")
