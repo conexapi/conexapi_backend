@@ -5,9 +5,11 @@
 
 from fastapi import FastAPI
 from app.database.database import create_db_and_tables
+from app.api import auth
 
 # Inicializa la aplicación FastAPI.
 app = FastAPI()
+app.include_router(auth.router)
 
 @app.on_event("startup")
 async def startup_event():
