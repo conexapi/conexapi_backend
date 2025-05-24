@@ -1,147 +1,107 @@
-# Ubicación: /conexapi/backend/app/auth.py
-# Propósito: Contiene funciones de utilidad para el hashing de contraseñas,
-#              creación y verificación de JWTs, y manejo de errores de autenticación.
+# Ubicación: /conexapi/conexapi_backend/app/api/auth.py
+# Propósito: Define los endpoints de la API para el registro y la autenticación de usuarios.
+# Dependencias: fastapi, sqlalchemy.orm.Session, datetime, timedelta, jwt, app.config,
+#               app.database.database, app.crud.user, app.schemas.user,
+#               fastapi.security.OAuth2PasswordRequestForm
 
-# Dependencias: passlib (para bcrypt), python-jose (para JWT), datetime, timedelta, os, HTTPException,
-#               SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES del .env
+from datetime import datetime, timedelta, timezone
+from typing import Annotated
 
-from datetime import datetime, timedelta, timezone # Para manejar fechas y tiempos (expiración de tokens)
-from typing import Optional # Para tipos que pueden ser opcionales
-from jose import JWTError, jwt # jose: Librería para JWT (JSON Web Tokens)
-from passlib.context import CryptContext # passlib: Para hashing de contraseñas
-from fastapi import HTTPException, status # FastAPI: Para manejar errores HTTP
-from fastapi.security import OAuth2PasswordBearer # FastAPI: Esquema de seguridad para autenticación con contraseña y token
-from dotenv import load_dotenv
-import os
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+from jose import JWTError, jwt
 
-# Cargar las variables de entorno para las configuraciones JWT
-load_dotenv()
+from app.database.database import get_db
+from app.crud import user as crud_user
+from app.schemas import user as schemas_user
+from app.config import settings # Importar la configuración que incluye SECRET_KEY y ALGORITHM
 
-# Obtener las variables de entorno JWT.
-# Levantamos un error si no están configuradas, porque son esenciales para la seguridad.
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES_STR = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
+# Propósito: Crea un router de FastAPI para organizar los endpoints relacionados con la autenticación.
+#            Es como agrupar todas las "ventanillas" de seguridad en un solo lugar.
+router = APIRouter(
+    prefix="/auth", # Prefijo para todas las rutas en este router (ej. /auth/register)
+    tags=["Auth"]   # Etiqueta para agrupar en la documentación de Swagger UI.
+)
 
-if not SECRET_KEY:
-    raise ValueError("SECRET_KEY no está configurada en el archivo .env")
-if not ALGORITHM:
-    raise ValueError("ALGORITHM no está configurada en el archivo .env")
-if not ACCESS_TOKEN_EXPIRE_MINUTES_STR:
-    raise ValueError("ACCESS_TOKEN_EXPIRE_MINUTES no está configurada en el archivo .env")
+# Propósito: Objeto para manejar la seguridad OAuth2 con contraseña.
+#            Le dice a FastAPI cómo esperar un token de autenticación en la cabecera 'Authorization'.
+# /token (str): La ruta donde el cliente debe enviar la contraseña para obtener el token.
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
-# Convertir la duración del token a un número entero
-ACCESS_TOKEN_EXPIRE_MINUTES = int(ACCESS_TOKEN_EXPIRE_MINUTES_STR)
-
-# Configurar el contexto de hashing de contraseñas.
-# CryptContext(schemes=["bcrypt"], deprecated="auto"): Le dice a passlib que use Bcrypt
-# para hashear contraseñas y que maneje automáticamente algoritmos en desuso.
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# Configurar OAuth2PasswordBearer para la autenticación de tokens.
-# tokenUrl="token": Es la URL donde los clientes enviarán sus credenciales para obtener un token.
-#                    Esto se usa para la documentación de Swagger/OpenAPI.
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
-# --- Funciones de Hashing y Verificación de Contraseñas ---
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    Verifica si una contraseña en texto plano coincide con una contraseña hasheada.
-
-    Args:
-        plain_password (str): La contraseña que el usuario ha introducido (texto plano).
-        hashed_password (str): La contraseña hasheada almacenada en la base de datos.
-
-    Returns:
-        bool: True si las contraseñas coinciden, False en caso contrario.
-    """
-    # pwd_context.verify(plain_password, hashed_password): Utiliza bcrypt para comparar
-    # la contraseña en texto plano con el hash.
-    return pwd_context.verify(plain_password, hashed_password)
-
-def get_password_hash(password: str) -> str:
-    """
-    Genera un hash seguro para una contraseña en texto plano.
-
-    Args:
-        password (str): La contraseña en texto plano a hashear.
-
-    Returns:
-        str: La contraseña hasheada.
-    """
-    # pwd_context.hash(password): Utiliza bcrypt para hashear la contraseña.
-    return pwd_context.hash(password)
-
-# --- Funciones para JWT (JSON Web Tokens) ---
-
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """
-    Crea un nuevo token de acceso JWT.
-
-    Args:
-        data (dict): Un diccionario con los datos a codificar en el token (ej. {"sub": "user@example.com"}).
-        expires_delta (Optional[timedelta]): La duración opcional del token. Si es None, usa la duración por defecto.
-
-    Returns:
-        str: El token JWT codificado.
-    """
-    # Copiamos los datos para no modificar el diccionario original.
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+    # Propósito: Genera un token JWT (JSON Web Token) con una duración determinada.
+    # Parámetros:
+    #   - data (dict): Los datos que se incluirán en el token (ej. el email del usuario).
+    #   - expires_delta (timedelta | None): El tiempo de expiración del token.
+    # Retorno:
+    #   - (str): El token JWT codificado.
+    # Símbolo especial: | None (Pipe None): Indica que expires_delta puede ser un objeto timedelta o None.
     to_encode = data.copy()
-
-    # Define el tiempo de expiración del token.
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        # Si no se especifica duración, usa la por defecto del .env
-        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-
-    # Añade el tiempo de expiración al diccionario de datos.
-    to_encode.update({"exp": expire})
-
-    # Codifica el token usando los datos, la clave secreta y el algoritmo.
-    # jwt.encode(payload, key, algorithm): Codifica el JWT.
-    # payload: Los datos a incluir (el diccionario to_encode).
-    # key: La clave secreta para firmar el token.
-    # algorithm: El algoritmo de encriptación.
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        # Si no se especifica, usa el tiempo de expiración de la configuración.
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
+    to_encode.update({"exp": expire}) # Agrega la fecha de expiración al token.
+    # Símbolo especial: jwt.encode(). Codifica los datos en un JWT usando la clave secreta y el algoritmo.
+    encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
     return encoded_jwt
 
-def decode_access_token(token: str) -> dict:
-    """
-    Decodifica y verifica un token JWT.
+@router.post("/register", response_model=schemas_user.UserInDB)
+async def register_user(
+    user: schemas_user.UserCreate, # Recibe los datos del usuario (email, password)
+    db: Session = Depends(get_db)  # Obtiene una sesión de base de datos
+):
+    # Propósito: Endpoint para que un nuevo usuario se registre en el sistema.
+    # Responsabilidades: Validar datos, verificar si el email ya existe, crear usuario y devolverlo.
 
-    Args:
-        token (str): El token JWT a decodificar.
+    # 1. Verificar si el email ya está registrado.
+    db_user = crud_user.get_user_by_email(db, email=user.email)
+    if db_user:
+        # Si el email ya existe, lanzamos una excepción HTTP con un código de estado 400.
+        # : (dos puntos): En este contexto, parte de la sintaxis de excepción.
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email ya registrado"
+        )
+    # 2. Si el email no existe, creamos el usuario en la base de datos.
+    return crud_user.create_user(db=db, user=user)
 
-    Returns:
-        dict: Los datos decodificados del token.
+@router.post("/token", response_model=dict)
+async def login_for_access_token(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()], # Recibe username y password de un formulario
+    db: Session = Depends(get_db) # Obtiene una sesión de base de datos
+):
+    # Propósito: Endpoint para que un usuario inicie sesión y obtenga un token de acceso JWT.
+    # Responsabilidades: Validar credenciales, generar y devolver el token.
 
-    Raises:
-        HTTPException: Si el token no es válido o ha expirado.
-    """
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED, # Código de estado HTTP 401: No autorizado
-        detail="No se pudieron validar las credenciales", # Mensaje de error
-        headers={"WWW-Authenticate": "Bearer"}, # Encabezado para indicar el tipo de autenticación
+    user_email = form_data.username # OAuth2PasswordRequestForm usa 'username' para el identificador
+    user_password = form_data.password
+
+    # 1. Buscar al usuario por email.
+    user = crud_user.get_user_by_email(db, email=user_email)
+    if not user:
+        # Si el usuario no existe, lanzamos una excepción 401 (Unauthorized).
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenciales incorrectas",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    # 2. Verificar la contraseña.
+    if not crud_user.verify_password(user_password, user.hashed_password):
+        # Si la contraseña no coincide, lanzamos una excepción 401.
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenciales incorrectas",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    # 3. Si las credenciales son correctas, creamos el token de acceso.
+    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+    access_token = create_access_token(
+        data={"sub": user.email}, # "sub" (subject) es una convención JWT para el identificador del usuario.
+        expires_delta=access_token_expires
     )
-    try:
-        # jwt.decode(token, key, algorithms): Decodifica el JWT.
-        # options={"verify_aud": False}: Desactiva la verificación de la audiencia,
-        # lo cual es útil si no estamos usando un campo 'aud' específico.
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_aud": False})
-        return payload
-    except JWTError: # Si el token no es válido (ej. firma incorrecta, formato inválido)
-        raise credentials_exception
-    except Exception as e: # Cualquier otro error inesperado
-        print(f"Error inesperado al decodificar token: {e}")
-        raise credentials_exception
-
-# Símbolos especiales explicados:
-# `-> bool`: Anotación de tipo que indica que la función retornará un valor booleano.
-# `Optional[timedelta]`: Indica que el argumento `expires_delta` puede ser un objeto `timedelta` o `None`.
-# `timedelta`: Objeto de `datetime` que representa una duración de tiempo.
-# `jwt.encode`, `jwt.decode`: Funciones de la librería `python-jose` para manejar JWTs.
-# `HTTPException`: Clase de FastAPI para levantar errores HTTP específicos que la API puede manejar.
-# `status.HTTP_401_UNAUTHORIZED`: Una constante de FastAPI para el código de estado HTTP 401.
-# `payload`: En JWT, el "payload" es la sección donde se guardan los datos.
+    # Retorno:
+    # -> dict: La función devuelve un diccionario con el token de acceso y su tipo.
+    return {"access_token": access_token, "token_type": "bearer"}
