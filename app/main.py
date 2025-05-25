@@ -1,34 +1,22 @@
 # Ubicación: /conexapi/conexapi_backend/app/main.py
-# Propósito: Es el punto de entrada principal para nuestra aplicación FastAPI.
-#            Aquí inicializamos FastAPI, ejecutamos operaciones de base de datos
-#            y "conectamos" los routers de nuestra API.
-# Dependencias: fastapi, app.database.database, app.api.auth
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from app.database.database import create_db_and_tables
-from app.api import auth # <-- ¡NUEVA LÍNEA! Importa el router de autenticación
+# CORRECCIÓN DE LA LÍNEA DE IMPORTACIÓN:
+from app.database.database import create_db_and_tables # <-- ¡AHORA SÍ ES CORRECTO AQUÍ!
+from app.api import auth
 
-# Inicializa la aplicación FastAPI.
-app = FastAPI()
-
-# Símbolo especial: app.include_router(). Conecta un router de FastAPI (como el de autenticación)
-#                   a la aplicación principal. Esto hace que todos los endpoints definidos
-#                   en 'auth.py' estén disponibles a través de nuestra API principal.
-app.include_router(auth.router) # <-- ¡NUEVA LÍNEA!
-
-@app.on_event("startup")
-async def startup_event():
-    # Propósito: Función que se ejecuta automáticamente cuando la aplicación FastAPI arranca.
-    #            Es el lugar ideal para tareas de inicialización, como crear las tablas de la base de datos.
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     print("Iniciando la aplicación y creando tablas de base de datos...")
     create_db_and_tables()
     print("Aplicación iniciada. Tablas verificadas.")
+    yield
+    print("Apagando la aplicación...")
+
+app = FastAPI(lifespan=lifespan)
+app.include_router(auth.router)
 
 @app.get("/")
 async def read_root():
-    # Propósito: Un endpoint de prueba simple para verificar que la API está funcionando.
-    #            Cuando accedes a la raíz de la API (por ejemplo, http://localhost:8000/),
-    #            esta función se ejecuta y devuelve un mensaje.
-    # -> (dict[str, str]): La flecha indica que esta función devuelve un diccionario
-    #                      donde las claves y los valores son cadenas de texto.
     return {"message": "¡ConexAPI Backend funcionando!"}

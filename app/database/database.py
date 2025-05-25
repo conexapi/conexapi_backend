@@ -1,36 +1,33 @@
 # Ubicación: /conexapi/conexapi_backend/app/database/database.py
 # Propósito: Configura la conexión a la base de datos PostgreSQL utilizando SQLAlchemy.
 #            Proporciona una función para obtener una sesión de base de datos.
-# Dependencias: sqlalchemy, sqlalchemy.orm.sessionmaker, app.config
+# Dependencias: sqlalchemy, sqlalchemy.orm.sessionmaker, app.config, app.database.models
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session # Importar Session directamente
+from sqlalchemy.orm import sessionmaker, Session
 from app.config import settings
+from app.database.models import Base # <-- ¡NUEVA LÍNEA! Importa Base
 
-# Propósito: Crea el motor de la base de datos.
-#            SQLALCHEMY_DATABASE_URL es la cadena de conexión que cargamos de las variables de entorno.
-#            echo=True: hará que SQLAlchemy imprima todas las sentencias SQL que ejecuta,
-#                       lo cual es útil para depuración en desarrollo.
 engine = create_engine(
     settings.database_url,
-    echo=True # Mostrar las consultas SQL en la consola.
+    echo=True
 )
 
-# Propósito: Configura una clase SessionLocal para crear sesiones de base de datos.
-#            autocommit=False: Los cambios no se guardan automáticamente, necesitas llamar a db.commit().
-#            autoflush=False: Los objetos no se vacían automáticamente a la DB antes de cada consulta.
-#            bind=engine: Asocia esta clase de sesión con nuestro motor de base de datos.
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db():
-    # Propósito: Proporciona una sesión de base de datos que se cierra automáticamente.
-    #            Esto es lo que FastAPI usará con Depends().
-    # Símbolo especial: yield. Hace que esta función sea un "generador de contexto".
-    #                   La parte antes de 'yield' se ejecuta al inicio (abre la sesión).
-    #                   La parte después de 'yield' se ejecuta al final (cierra la sesión).
-    db = SessionLocal() # Crea una nueva sesión de la base de datos.
-    # Símbolo especial: try...finally. Asegura que la sesión se cierre incluso si hay errores.
+    db = SessionLocal()
     try:
-        yield db # Devuelve la sesión de la base de datos al código que la solicitó.
+        yield db
     finally:
-        db.close() # Cierra la sesión de la base de datos después de usarla.
+        db.close()
+
+# ----- ¡AÑADE O MUEVE ESTA FUNCIÓN AQUÍ! -----
+def create_db_and_tables():
+    # Propósito: Crea todas las tablas en la base de datos que están definidas por los modelos de SQLAlchemy.
+    #            Esto se hace una vez al inicio de la aplicación si las tablas no existen.
+    # Dependencias: app.database.models.Base
+    print("Intentando crear tablas de base de datos...")
+    Base.metadata.create_all(engine)
+    print("Tablas de la base de datos creadas o actualizadas exitosamente.")
+# ---------------------------------------------
