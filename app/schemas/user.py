@@ -18,6 +18,11 @@ class UserCreate(UserBase):
     password: str
     # password (str): La contraseña del usuario (en texto plano antes de ser cifrada).
 
+    # role: str = "regular" # Si quieres que el frontend pueda sugerir un rol al registrarse.
+                           # Sin embargo, generalmente el rol se asigna en el backend.
+                           # Lo dejamos comentado por ahora, el backend lo manejará.
+
+
 class UserInDB(UserBase):
     # Propósito: Esquema para representar un usuario tal como se guarda en la base de datos.
     #            Contiene el ID y la contraseña ya cifrada (hashed).
@@ -26,6 +31,8 @@ class UserInDB(UserBase):
     # id (int): El ID único del usuario en la base de datos.
     hashed_password: str
     # hashed_password (str): La contraseña del usuario ya cifrada (hashed).
+
+    role: str # Incluir el rol en el esquema que representa al usuario de la DB.
 
     class Config:
         # Propósito: Configuración interna de Pydantic para este modelo.
