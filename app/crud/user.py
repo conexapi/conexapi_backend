@@ -6,8 +6,6 @@ from app.database import models # <-- Aquí importamos los modelos, no la funci�
 from app.schemas import user as schemas_user
 from passlib.context import CryptContext
 
-# ELIMINA ESTA LÍNEA SI ESTÁ PRESENTE:
-# from app.database.models import create_db_and_tables # <-- ¡ELIMINAR ESTA LÍNEA!
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -22,7 +20,15 @@ def get_user_by_email(db: Session, email: str):
 
 def create_user(db: Session, user: schemas_user.UserCreate):
     hashed_password = get_password_hash(user.password)
-    db_user = models.User(email=user.email, hashed_password=hashed_password)
+
+    # Crear el objeto User con el email, la contraseña cifrada y el rol por defecto.
+    # No pasamos 'role' directamente de user: schemas_user.UserCreate,
+    # porque UserCreate no tiene un campo 'role' (y el modelo ya tiene un valor por defecto).
+    db_user = models.User(email=user.email, hashed_password=hashed_password, role="regular")
+    # Si UserCreate tuviera un campo role y se quisiera usar, sería:
+    # db_user = models.User(email=user.email, hashed_password=hashed_password, role=user.role)
+    # Pero por ahora, forzamos el rol "regular" para nuevos registros.
+   
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
