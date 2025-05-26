@@ -33,3 +33,12 @@ class UserInDB(UserBase):
         from_attributes = True
         # from_attributes (bool): Símbolo especial. Le dice a Pydantic que intente leer
         #                         los datos de objetos que no son diccionarios (como los objetos de SQLAlchemy).
+
+
+#Se añade la clase TokenData que simplemente espera un campo username (que es el sub de nuestro token). Esto ayuda a Pydantic a validar que el payload del token tenga la estructura esperada.
+class TokenData(BaseModel):
+    # Propósito: Esquema para validar los datos que se extraen del payload de un token JWT.
+    #            Contiene el identificador del usuario (username/email) que se usó en el token.
+    username: str | None = None # <-- ¡NUEVA LÍNEA!
+    # username (str | None): El identificador del usuario (nuestro email) que se espera en el token.
+    #                        Puede ser None si el token no contiene esta información.
