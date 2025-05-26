@@ -4,9 +4,9 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from app.schemas import user as schemas_user
-from app.utils.auth import get_current_user # <-- ¡NUEVA LÍNEA!
+from app.utils.auth import get_current_user, is_admin  # <-- ¡NUEVA LÍNEA!
 
 # Propósito: Crea un router de FastAPI para organizar los endpoints relacionados con los usuarios.
 router = APIRouter(
@@ -26,3 +26,16 @@ async def read_users_me(
     # Retorno:
     #   - (schemas_user.UserInDB): El objeto UserInDB del usuario actualmente autenticado.
     return current_user
+
+@router.get("/admin-only", response_model=dict)
+async def read_admin_only_data(
+    current_admin_user: Annotated[schemas_user.UserInDB, Depends(is_admin())] # <-- ¡PROTEGIDO POR ROL!
+):
+    # Propósito: Endpoint que solo puede ser accedido por usuarios con el rol 'admin'.
+    #            FastAPI llamará a is_admin() (que a su vez llama a check_user_role)
+    #            antes de ejecutar esta función.
+    #            Si el usuario no es admin, se lanzará una HTTPException 403.
+    # Retorno:
+    #   - (dict): Un mensaje que confirma el acceso de administrador.
+    return {"message": f"¡Bienvenido, administrador {current_admin_user.email}! Tienes acceso a datos sensibles."}
+# ----------------------------
