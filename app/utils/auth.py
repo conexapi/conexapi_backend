@@ -82,3 +82,38 @@ async def get_current_user(
 
     # 7. Si todo es válido, devolvemos el objeto del usuario.
     return schemas_user.UserInDB.from_orm(user)
+
+def check_user_role(required_roles: list[str]):
+    # Propósito: Devuelve una dependencia que verifica si el usuario actual tiene alguno de los roles requeridos.
+    # Parámetros:
+    #   - required_roles (list[str]): Una lista de roles que son permitidos para acceder al endpoint.
+    # Retorno:
+    #   - Una función de dependencia que puede ser usada en los endpoints de FastAPI.
+
+    async def role_checker(current_user: Annotated[schemas_user.UserInDB, Depends(get_current_user)]):
+        # Propósito: Función interna que realmente realiza la verificación del rol.
+        #            Esta función será inyectada por FastAPI.
+        # Parámetros:
+        #   - current_user (schemas_user.UserInDB): El usuario ya autenticado (proporcionado por get_current_user).
+        # Excepciones:
+        #   - HTTPException (403 Forbidden): Si el usuario no tiene los roles necesarios.
+
+        if current_user.role not in required_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No tienes permiso para realizar esta acción"
+            )
+        return current_user # Devuelve el usuario si el rol es permitido.
+
+    return role_checker
+
+# Helper para roles específicos (opcional, pero útil para claridad)
+def is_admin():
+    return check_user_role(["admin"])
+
+def is_regular_user():
+    return check_user_role(["regular"])
+
+# Puedes crear más helpers según tus necesidades:
+# def is_editor():
+#     return check_user_role(["admin", "editor"])
