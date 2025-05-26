@@ -5,7 +5,7 @@
 #               app.config, app.database.database, app.crud.user, app.schemas.user
 
 from datetime import datetime, timedelta, timezone
-from typing import Annotated
+from typing import Annotated, Optional # ¡IMPORTANTE: Optional es necesario aquí!
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -19,6 +19,7 @@ from app.schemas import user as schemas_user
 
 # Propósito: Objeto para manejar la seguridad OAuth2 con token Bearer.
 #            Define el esquema de seguridad que FastAPI usará para esperar un token.
+#            tokenUrl="/auth/token" indica a FastAPI dónde el cliente puede obtener un token.
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 async def get_current_user(
@@ -46,22 +47,38 @@ async def get_current_user(
         # 2. Decodificar el token.
         # jwt.decode(): Intenta decodificar el token usando la clave secreta y el algoritmo.
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
-        # "sub": Extrae el "subject" (generalmente el email del usuario) del payload del token.
-        username: str = payload.get("sub")
+        
+        # Obtener 'sub' (subject) del payload. Puede ser None si no está presente.
+        username: Optional[str] = payload.get("sub") 
+        
+        # 3. Verificar si el username se pudo extraer y es una cadena de texto.
         if username is None:
-            # Si no hay "sub" en el token, no es válido.
             raise credentials_exception
-        # 3. Validar el esquema del token con Pydantic (opcional pero buena práctica).
-        token_data = schemas_user.TokenData(username=username) # Usa un esquema de token (lo crearemos en el siguiente paso)
+        
+        # Pylance es estricto, así que aseguramos que es un str antes de pasarlo a Pydantic.
+        # Aunque después de 'if username is None' ya sabemos que no es None, 
+        # esta comprobación extra ayuda al analizador estático de Pylance.
+        if not isinstance(username, str):
+            raise credentials_exception
+
+        # Crear un objeto TokenData con el username extraído.
+        token_data = schemas_user.TokenData(username=username)
+        
     except JWTError:
-        # Si hay un error al decodificar el token (ej. firma inválida, expirado).
+        # Si hay un error al decodificar el token (ej. firma inválida, expirado),
+        # lanzamos una excepción de credenciales.
         raise credentials_exception
 
-    # 4. Buscar el usuario en la base de datos usando el email del token.
-    user = crud_user.get_user_by_email(db, email=token_data.username)
+    # 4. Asegurarse de que username no es None antes de pasarlo a get_user_by_email.
+    # Esto es para calmar a Pylance, ya que lógicamente ya lo verificamos arriba.
+    assert token_data.username is not None, "El nombre de usuario no debería ser None después de la validación del token."
+
+    # 5. Buscar el usuario en la base de datos usando el email del token.
+    user = crud_user.get_user_by_email(db, email=token_data.username) # Pylance ahora no se quejará aquí.
+    
+    # 6. Si el usuario no existe en la base de datos (quizás fue eliminado después de emitir el token).
     if user is None:
-        # Si el usuario no existe en la base de datos (quizás fue eliminado después de emitir el token).
         raise credentials_exception
 
-    # 5. Si todo es válido, devolvemos el objeto del usuario.
+    # 7. Si todo es válido, devolvemos el objeto del usuario.
     return schemas_user.UserInDB.from_orm(user)
