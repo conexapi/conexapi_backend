@@ -31,6 +31,10 @@ class User(Base):
     # hashed_password (Column): La columna para la contraseña. Es un texto (String) y almacenará
     #                           la contraseña cifrada (nunca la contraseña real por seguridad).
 
+    role = Column(String, default="regular") # Añadimos una columna 'role' con un valor por defecto.
+    # role (Column): La columna para el rol del usuario (ej. 'admin', 'regular').
+    #                Valor por defecto 'regular' para los nuevos usuarios.
+
     def __repr__(self):
         # Propósito: Método especial que define cómo se representa un objeto User cuando lo imprimimos.
         #            Ayuda a depurar mostrando información legible del usuario.
