@@ -3,39 +3,71 @@
 #            Cada clase aquí representa una tabla de nuestra base de datos.
 # Dependencias: sqlalchemy
 
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum # <-- ¡NUEVAS IMPORTACIONES!
+from sqlalchemy.orm import declarative_base, relationship # <-- ¡NUEVA IMPORTACIÓN: relationship!
+from datetime import datetime # <-- ¡NUEVA IMPORTACIÓN!
+import enum # <-- ¡NUEVA IMPORTACIÓN!
 
-# Símbolo especial: declarative_base() es una función de SQLAlchemy que devuelve una clase base
-#                   para nuestros modelos declarativos. Es la base de nuestras tablas.
 Base = declarative_base()
 
 class User(Base):
-    # Propósito: Representa la tabla 'users' en la base de datos.
-    #            Aquí guardaremos la información de los usuarios registrados en el sistema.
-    # Responsabilidades: Almacenar ID, email y contraseña cifrada de los usuarios.
-
     __tablename__ = "users"
-    # __tablename__ (str): Símbolo especial que le dice a SQLAlchemy cómo se llamará la tabla
-    #                      en la base de datos. En este caso, 'users'.
 
     id = Column(Integer, primary_key=True, index=True)
-    # id (Column): La columna 'id'. Es un número entero, la clave principal de la tabla
-    #              (identificador único para cada usuario) y tiene un índice para búsquedas rápidas.
-
     email = Column(String, unique=True, index=True)
-    # email (Column): La columna 'email'. Es un texto (String), debe ser único para cada usuario
-    #                 (no pueden haber dos usuarios con el mismo email) y también tiene un índice.
-
     hashed_password = Column(String)
-    # hashed_password (Column): La columna para la contraseña. Es un texto (String) y almacenará
-    #                           la contraseña cifrada (nunca la contraseña real por seguridad).
+    role = Column(String, default="regular")
 
-    role = Column(String, default="regular") # Añadimos una columna 'role' con un valor por defecto.
-    # role (Column): La columna para el rol del usuario (ej. 'admin', 'regular').
-    #                Valor por defecto 'regular' para los nuevos usuarios.
+    # Definir la relación inversa con Order.
+    # Esto permite acceder a 'user.orders' para obtener las órdenes de un usuario.
+    orders = relationship("Order", back_populates="owner") # <-- ¡ESTA LÍNEA ES CLAVE!
 
     def __repr__(self):
-        # Propósito: Método especial que define cómo se representa un objeto User cuando lo imprimimos.
-        #            Ayuda a depurar mostrando información legible del usuario.
-        return f"<User(id={self.id}, email='{self.email}')>"
+        return f"<User(id={self.id}, email='{self.email}', role='{self.role}')>" # <-- Opcional: Actualizar repr
+
+# ----- ¡NUEVA CLASE DE MODELO COMPLETA QUE DEBE ESTAR AQUÍ! -----
+
+# 1. Definir un Enum para el estado de la orden (buena práctica para valores fijos)
+class OrderStatus(enum.Enum): # <--- ¡ESTO ES LO QUE FALTA EN TU ARCHIVO ACTUAL!
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+
+class Order(Base):
+    # Propósito: Representa la tabla 'orders' en la base de datos.
+    #            Almacena la información de cada orden de venta.
+
+    __tablename__ = "orders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    
+    # Campo para identificar la orden externamente (ej. ID de Siigo, MercadoLibre)
+    external_id = Column(String, unique=True, index=True, nullable=True) # ID de la orden en el sistema externo
+
+    # Estado de la orden (usando el Enum que definimos)
+    status = Column(Enum(OrderStatus), default=OrderStatus.PENDING, nullable=False)
+
+    # Fecha y hora de creación de la orden
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    # Fecha y hora de la última actualización de la orden
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    # Cantidad total de la orden (ej. 10 unidades de productos)
+    total_quantity = Column(Integer, default=0, nullable=False)
+    # Valor total de la orden
+    total_amount = Column(Float, default=0.0, nullable=False)
+
+    # Relación con el usuario que creó la orden
+    # ForeignKey indica que esta columna es una clave foránea a la tabla 'users', columna 'id'.
+    owner_id = Column(Integer, ForeignKey("users.id")) # <-- ¡Clave foránea!
+
+    # Define la relación entre Order y User.
+    # 'owner' es el objeto User asociado a esta orden.
+    # 'back_populates' conecta con la 'orders' en la clase User.
+    owner = relationship("User", back_populates="orders")
+
+    def __repr__(self):
+        return f"<Order(id={self.id}, external_id='{self.external_id}', status='{self.status.value}', owner_id={self.owner_id})>"
+
+# ---------------------------------------------
