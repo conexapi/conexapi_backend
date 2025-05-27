@@ -38,4 +38,3 @@ async def read_admin_only_data(
     # Retorno:
     #   - (dict): Un mensaje que confirma el acceso de administrador.
     return {"message": f"¡Bienvenido, administrador {current_admin_user.email}! Tienes acceso a datos sensibles."}
-# ----------------------------
