@@ -3,10 +3,11 @@
 #            Cada clase aquí representa una tabla de nuestra base de datos.
 # Dependencias: sqlalchemy
 
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum # <-- ¡NUEVAS IMPORTACIONES!
-from sqlalchemy.orm import declarative_base, relationship # <-- ¡NUEVA IMPORTACIÓN: relationship!
-from datetime import datetime # <-- ¡NUEVA IMPORTACIÓN!
-import enum # <-- ¡NUEVA IMPORTACIÓN!
+# Importamos 'timezone' de datetime para usar datetime.now(timezone.utc)
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum
+from sqlalchemy.orm import declarative_base, relationship
+from datetime import datetime, timezone # <-- ¡CAMBIO AQUÍ! Añadir 'timezone'
+import enum
 
 Base = declarative_base()
 
@@ -49,9 +50,8 @@ class Order(Base):
     status = Column(Enum(OrderStatus), default=OrderStatus.PENDING, nullable=False)
 
     # Fecha y hora de creación de la orden
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    # Fecha y hora de la última actualización de la orden
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=datetime.now(timezone.utc), nullable=False)
+    updated_at = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc), nullable=False)
 
     # Cantidad total de la orden (ej. 10 unidades de productos)
     total_quantity = Column(Integer, default=0, nullable=False)
