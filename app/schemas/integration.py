@@ -1,9 +1,9 @@
 # Ubicación: /conexapi/conexapi_backend/app/schemas/integration.py
 
+from pydantic import BaseModel, EmailStr, Field
+from typing import Optional, Dict, Any, List
 from datetime import datetime
-from typing import Optional
 
-from pydantic import BaseModel, Field
 
 class IntegrationConfigBase(BaseModel):
     platform_name: str = Field(..., min_length=1, max_length=50)
@@ -18,6 +18,17 @@ class IntegrationConfigBase(BaseModel):
 
 class IntegrationConfigCreate(IntegrationConfigBase):
     pass
+
+# ... tus esquemas IntegrationConfigCreate, IntegrationConfigUpdate, IntegrationConfigInDB ...
+# --- ¡NUEVO ESQUEMA PARA LA ACTUALIZACIÓN DE TOKENS! ---
+class IntegrationConfigTokenUpdate(BaseModel):
+    ml_access_token: Optional[str] = None
+    ml_refresh_token: Optional[str] = None
+    ml_token_expires_at: Optional[datetime] = None
+    # Puedes añadir aquí también los tokens de Siigo si los manejas de forma similar
+
+
+# --------------------------------------------------------
 
 class IntegrationConfigUpdate(BaseModel):
     platform_name: Optional[str] = None
@@ -35,3 +46,4 @@ class IntegrationConfigInDB(IntegrationConfigBase):
 
     class Config:
         from_attributes = True
+        extra="ignore" # Permite campos adicionales para flexibilidad

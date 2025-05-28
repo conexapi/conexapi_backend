@@ -42,10 +42,10 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
         expire = datetime.now(timezone.utc) + expires_delta
     else:
         # Si no se especifica, usa el tiempo de expiración de la configuración.
-        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire}) # Agrega la fecha de expiración al token.
     # Símbolo especial: jwt.encode(). Codifica los datos en un JWT usando la clave secreta y el algoritmo.
-    encoded_jwt = jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 @router.post("/register", response_model=schemas_user.UserInDB)
@@ -97,7 +97,7 @@ async def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
     # 3. Si las credenciales son correctas, creamos el token de acceso.
-    access_token_expires = timedelta(minutes=settings.access_token_expire_minutes)
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email}, # "sub" (subject) es una convención JWT para el identificador del usuario.
         expires_delta=access_token_expires

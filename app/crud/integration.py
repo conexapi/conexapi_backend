@@ -52,22 +52,25 @@ def create_integration_config(db: Session, config: schemas_integration.Integrati
     db.refresh(db_config)
     return db_config
 
-def update_integration_config(db: Session, config_id: int, config_update: schemas_integration.IntegrationConfigUpdate) -> Optional[models.IntegrationConfig]:
-    """
-    Actualiza una configuración de integración existente.
-    """
+def update_integration_config(
+    db: Session,
+    config_id: int,
+    # Puede recibir un IntegrationConfigUpdate o IntegrationConfigTokenUpdate
+    config_update_data: schemas_integration.IntegrationConfigUpdate | schemas_integration.IntegrationConfigTokenUpdate
+) -> Optional[models.IntegrationConfig]:
     db_config = get_integration_config(db, config_id)
     if db_config:
         # model_dump(exclude_unset=True) solo incluye campos que se hayan proporcionado en la actualización.
-        update_data = config_update.model_dump(exclude_unset=True)
-        
+        # Usar model_dump para obtener solo los campos seteados en el Pydantic Schema
+        update_data = config_update_data.model_dump(exclude_unset=True)
         if update_data:
-            # Crea la sentencia UPDATE para la configuración específica por ID.
+             # Crea la sentencia UPDATE para la configuración específica por ID.
             stmt = update(models.IntegrationConfig).where(models.IntegrationConfig.id == config_id).values(**update_data)
             db.execute(stmt)
             db.commit()
-            db.refresh(db_config) # Refrescar la instancia para tener los últimos datos
+            db.refresh(db_config)# Refrescar la instancia para tener los últimos datos
     return db_config
+
 
 def delete_integration_config(db: Session, config_id: int) -> Optional[models.IntegrationConfig]:
     """
