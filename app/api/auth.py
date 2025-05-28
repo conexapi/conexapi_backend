@@ -89,7 +89,7 @@ async def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
     # 2. Verificar la contraseña.
-    if not crud_user.verify_password(user_password, user.hashed_password):
+    if not crud_user.verify_password(user_password, str(user.hashed_password)):
         # Si la contraseña no coincide, lanzamos una excepción 401.
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
