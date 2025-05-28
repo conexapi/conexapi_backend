@@ -80,8 +80,6 @@ class Order(Base):
 # ---------------------------------------------
 
 # --- ¡NUEVA CLASE DE MODELO PARA CREDENCIALES DE INTEGRACIÓN! ---
-# Ubicación: /conexapi/conexapi_backend/app/database/models.py
-
 class IntegrationConfig(Base):
     __tablename__ = "integration_configs"
 
@@ -89,16 +87,12 @@ class IntegrationConfig(Base):
     platform_name = Column(String, unique=True, index=True, nullable=False) # Ej: "SIIGO", "MERCADOLIBRE"
     api_key_or_username = Column(String, nullable=False) # Para Siigo: "Username", para ML: "Client ID" (nuestro)
     access_key_or_secret = Column(String, nullable=False) # Para Siigo: "Access Key", para ML: "Client Secret" (nuestro)
-    # Estos campos son para credenciales dinámicas que el usuario final provee:
-    # Para ML (OAuth 2.0):
+    
+    # Estos campos son para credenciales dinámicas que el usuario final provee (especialmente ML OAuth):
     ml_access_token = Column(String, nullable=True)
     ml_refresh_token = Column(String, nullable=True)
     ml_token_expires_at = Column(DateTime, nullable=True) # Cuándo expira el access_token de ML
     
-    # Podríamos añadir una relación si quisiéramos que cada integración estuviera asociada a un usuario específico
-    # owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    # owner = relationship("User")
-
     is_active = Column(Boolean, default=True) # Para activar/desactivar la integración
     created_at = Column(DateTime, default=datetime.now(timezone.utc), nullable=False)
     updated_at = Column(DateTime, default=datetime.now(timezone.utc), onupdate=datetime.now(timezone.utc), nullable=False)
