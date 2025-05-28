@@ -101,7 +101,7 @@ async def update_integration_config(
                     detail=f"Ya existe una configuración para la plataforma '{config_update.platform_name}'."
                 )
 
-    updated_config = crud_integration.update_integration_config(db=db, config_id=config_id, config_update=config_update)
+    updated_config = crud_integration.update_integration_config(db=db, config_id=config_id, config_update = config_update)
     if updated_config is None:
          raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Configuración no encontrada después de la actualización (posible error interno)")
     return updated_config

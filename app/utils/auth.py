@@ -46,7 +46,7 @@ async def get_current_user(
     try:
         # 2. Decodificar el token.
         # jwt.decode(): Intenta decodificar el token usando la clave secreta y el algoritmo.
-        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         
         # Obtener 'sub' (subject) del payload. Puede ser None si no está presente.
         username: Optional[str] = payload.get("sub") 
