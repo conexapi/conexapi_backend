@@ -5,7 +5,7 @@
 #               app.schemas.integration, app.utils.auth
 
 from typing import Annotated, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Path # Asegúrate de que Path esté aquí si lo usas
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
@@ -13,7 +13,7 @@ from app.crud import integration as crud_integration
 from app.schemas import integration as schemas_integration
 from app.schemas import user as schemas_user
 from app.utils.auth import is_admin
-from app.database import models
+from app.database import models # Esta importación está bien si la necesitas en otras partes.
 
 router = APIRouter(
     prefix="/integrations",
@@ -49,10 +49,9 @@ async def create_integration_config(
     response_description="Lista de configuraciones de integración."
 )
 async def read_integration_configs(
-    # ¡ORDEN DE ARGUMENTOS FINALMENTE AJUSTADO PARA PYLANCE!
     current_admin_user: Annotated[schemas_user.UserInDB, Depends(is_admin())],
     db: Session = Depends(get_db),
-    skip: int = 0, limit: int = 100 # Los argumentos con valor por defecto van al final
+    skip: int = 0, limit: int = 100
 ):
     configs = crud_integration.get_integration_configs(db, skip=skip, limit=limit)
     return configs
@@ -87,23 +86,25 @@ async def update_integration_config(
     current_admin_user: Annotated[schemas_user.UserInDB, Depends(is_admin())],
     db: Session = Depends(get_db)
 ):
+    # ¡CÓDIGO DESCOMENTADO Y CORREGIDO AQUÍ ABAJO!
     db_config = crud_integration.get_integration_config(db, config_id=config_id)
     if db_config is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Configuración no encontrada")
 
+    # Si hay un cambio de nombre de plataforma, verificar que no haya duplicados
     if config_update.platform_name and config_update.platform_name != db_config.platform_name:
         existing_config_by_name = crud_integration.get_integration_config_by_platform_name(db, platform_name=config_update.platform_name)
-
         if existing_config_by_name is not None:
-            if config_id != existing_config_by_name.id:
+            if config_id != existing_config_by_name.id: # Asegurarse de que no sea la misma configuración
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Ya existe una configuración para la plataforma '{config_update.platform_name}'."
                 )
 
-    updated_config = crud_integration.update_integration_config(db=db, config_id=config_id, config_update = config_update)
+    # Llamada corregida a la función CRUD
+    updated_config = crud_integration.update_integration_config(db=db, config_id=config_id, config_update_data=config_update) # <-- ¡CORRECCIÓN AQUÍ!
     if updated_config is None:
-         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Configuración no encontrada después de la actualización (posible error interno)")
+           raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Configuración no encontrada después de la actualización (posible error interno)")
     return updated_config
 
 # Endpoint para eliminar una configuración de integración
