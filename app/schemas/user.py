@@ -3,6 +3,7 @@
 #            loguearse y para representar un usuario en la respuesta de la API.
 # Dependencias: pydantic
 
+from typing import Optional
 from pydantic import BaseModel, EmailStr
 
 class UserBase(BaseModel):
@@ -21,7 +22,11 @@ class UserCreate(UserBase):
     # role: str = "regular" # Si quieres que el frontend pueda sugerir un rol al registrarse.
                            # Sin embargo, generalmente el rol se asigna en el backend.
                            # Lo dejamos comentado por ahora, el backend lo manejará.
-
+class UserUpdate(BaseModel):
+    # Permite actualizar solo email, password o role. Todos son opcionales.
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None
+    role: Optional[str] = None # Solo admin debería cambiar esto
 
 class UserInDB(UserBase):
     # Propósito: Esquema para representar un usuario tal como se guarda en la base de datos.
