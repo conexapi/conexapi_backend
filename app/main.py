@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from app.database.database import create_db_and_tables # <-- ¡AHORA SÍ ES CORRECTO AQUÍ!
 from app.api import auth
 from app.api import users
+from app.api import integrations
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -18,6 +19,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(integrations.router)
 
 @app.get("/")
 async def read_root():
