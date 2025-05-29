@@ -6,12 +6,19 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from app.config import settings
-from app.database.models import Base # <-- ¡NUEVA LÍNEA! Importa Base
+from app.database.models import Base # <-- 
 
+# --- INICIO DE LA MODIFICACIÓN ---
 engine = create_engine(
     settings.DATABASE_URL,
-    echo=True
+    echo=True, # Puedes mantenerlo en True para ver las queries SQL en la consola, o cambiarlo a False en producción.
+    pool_recycle=3600,   # Recicla conexiones cada 3600 segundos (1 hora).
+    pool_pre_ping=True,  # Prueba la conexión antes de usarla del pool.
+    pool_size=10,        # Mínimo de 10 conexiones en el pool.
+    max_overflow=20,     # Permite hasta 20 conexiones adicionales si el pool está a tope.
+    connect_args={"sslmode": "require"} # Asegura SSL, útil si no está explícito en la URL o para mayor seguridad.
 )
+# --- FIN DE LA MODIFICACIÓN ---
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
