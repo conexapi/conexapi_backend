@@ -42,7 +42,7 @@ def is_siigo_token_expired(config: models.IntegrationConfig) -> bool:
     # y la suma con `now_utc` producirán tipos de Python correctos.
     # `config.ml_token_expires_at` es un `datetime` (o ya lo comprobamos como None).
     # Por lo tanto, la comparación debería resultar en un `bool` sin problemas.
-     return cast(bool, config.ml_token_expires_at <= (now_utc + safety_margin)) # type: ignore
+    return cast(bool, config.ml_token_expires_at <= (now_utc + safety_margin)) # type: ignore
 
 
 # --- FUNCIONES DE AUTENTICACIÓN/OBTENCIÓN DE TOKENS PARA SIIGO ---
