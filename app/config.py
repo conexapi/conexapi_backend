@@ -30,14 +30,18 @@ class Settings(BaseSettings):
     MERCADOLIBRE_SECRET_KEY: str
     MERCADOLIBRE_AUTH_URL: str ="https://auth.mercadolibre.com/oauth/token"
     MERCADOLIBRE_API_BASE_URL: str = "https://api.mercadolibre.com"
-    MERCADOLIBRE_REDIRECT_URI: str = "http://localhost:8000/integrations/configs/mercadolibre/callback" #"https://api.conexapi.com/ml/auth/callback"
+    MERCADOLIBRE_REDIRECT_URI: str = "http://localhost:8000/integrations/configs/mercadolibre/callback" 
+    #"https://api.conexapi.com/ml/auth/callback"
 
 
      # ---VARIABLES PARA ERPs! ---
-    SIIGO_CLIENT_ID: str # Si lo usas más adelante
-    SIIGO_CLIENT_SECRET: str # Si lo usas más adelante
-    SIIGO_PARTNER_ID: str = "conexapi"
-    SIIGO_AUTH_URL:str =  "https://siigoapi.postman.co/auth" # URL del mock de Siigo o sandbox real
+    SIIGO_CLIENT_ID: str 
+    SIIGO_CLIENT_SECRET: str 
+    SIIGO_PARTNER_ID: str
+    SIIGO_AUTH_URL:str
+    #=  "https://siigoapi.postman.co/auth" # 
+
+    # URL del mock de Siigo o sandbox real
     SIIGO_API_BASE_URL:str =  "https://siigoapi.postman.co/V1" # URL del mock de Siigo o sandbox real
 
     # --------------------------------------------

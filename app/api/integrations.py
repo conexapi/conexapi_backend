@@ -14,6 +14,7 @@ from app.schemas import integration as schemas_integration
 from app.schemas import user as schemas_user
 from app.utils.auth import is_admin
 from app.database import models # Esta importación está bien si la necesitas en otras partes.
+from app.services import siigo as siigo_service
 
 router = APIRouter(
     prefix="/integrations",
@@ -28,6 +29,7 @@ router = APIRouter(
     summary="Crea una nueva configuración de integración (solo administradores)",
     response_description="Configuración de integración creada exitosamente."
 )
+
 async def create_integration_config(
     config: schemas_integration.IntegrationConfigCreate,
     current_admin_user: Annotated[schemas_user.UserInDB, Depends(is_admin())],
@@ -48,6 +50,8 @@ async def create_integration_config(
     summary="Obtiene todas las configuraciones de integración (solo administradores)",
     response_description="Lista de configuraciones de integración."
 )
+
+
 async def read_integration_configs(
     current_admin_user: Annotated[schemas_user.UserInDB, Depends(is_admin())],
     db: Session = Depends(get_db),
@@ -63,6 +67,8 @@ async def read_integration_configs(
     summary="Obtiene una configuración de integración por ID (solo administradores)",
     response_description="Configuración de integración encontrada."
 )
+
+
 async def read_integration_config(
     config_id: int,
     current_admin_user: Annotated[schemas_user.UserInDB, Depends(is_admin())],
@@ -80,6 +86,8 @@ async def read_integration_config(
     summary="Actualiza una configuración de integración (solo administradores)",
     response_description="Configuración de integración actualizada exitosamente."
 )
+
+
 async def update_integration_config(
     config_id: int,
     config_update: schemas_integration.IntegrationConfigUpdate,
@@ -106,6 +114,45 @@ async def update_integration_config(
     if updated_config is None:
            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Configuración no encontrada después de la actualización (posible error interno)")
     return updated_config
+
+
+async def activate_integration_config(
+    config_id: int,
+    current_admin_user: Annotated[schemas_user.UserInDB, Depends(is_admin())],
+    db: Session = Depends(get_db)
+):
+    db_config = crud_integration.get_integration_config(db, config_id)
+    if not db_config:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Configuración no encontrada")
+
+    # Actualizar is_active a True si no lo está
+    if db_config.is_active is False:
+        update_data = schemas_integration.IntegrationConfigUpdate(is_active=True)
+        db_config = crud_integration.update_integration_config(db, config_id, update_data)
+        if not db_config: # Re-chequear por si falla la actualización
+             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="No se pudo actualizar el estado de la configuración.")
+
+    # Si es una integración de SIIGO, intentamos obtener el token
+    if db_config.platform_name.upper() == "SIIGO":
+        print(f"Intentando obtener token de SIIGO para configuración {config_id}...")
+        updated_config = siigo_service.get_siigo_token(db, db_config)
+        if not updated_config:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No se pudo obtener el token de SIIGO. Verifica las credenciales de la aplicación y del cliente."
+            )
+        print(f"Token de SIIGO obtenido y guardado para configuración {config_id}.")
+        return updated_config
+    # Puedes añadir más lógicas para otras plataformas aquí (ej. Mercado Libre)
+    elif db_config.platform_name.upper() == "MERCADOLIBRE":
+        # Por ahora, solo confirmamos activación, el flujo de ML requiere redirección OAuth
+        # Esta parte se desarrollará después del SIIGO
+        print(f"La configuración de MercadoLibre {config_id} ha sido activada. El flujo OAuth se manejará por separado.")
+        return db_config # Retornar la config actualizada
+
+    # Si la plataforma no es SIIGO ni ML, simplemente confirmamos que se activó
+    return db_config
+
 
 # Endpoint para eliminar una configuración de integración
 @router.delete(
