@@ -3,7 +3,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 # CORRECCIÓN DE LA LÍNEA DE IMPORTACIÓN:
-from app.database.database import create_db_and_tables # <-- ¡AHORA SÍ ES CORRECTO AQUÍ!
+#from app.database.database import create_db_and_tables # <-- ¡AHORA SÍ ES CORRECTO AQUÍ!
 from app.api import auth
 from app.api import users
 from app.api import integrations
@@ -11,7 +11,10 @@ from app.api import integrations
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Iniciando la aplicación y creando tablas de base de datos...")
-    create_db_and_tables()
+    
+    #NO habilite esta línea si no sabe lo que hace
+    #create_db_and_tables()
+
     print("Aplicación iniciada. Tablas verificadas.")
     yield
     print("Apagando la aplicación...")

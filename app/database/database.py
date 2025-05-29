@@ -23,6 +23,7 @@ def get_db():
         db.close()
 
 # ----- ¡AÑADE O MUEVE ESTA FUNCIÓN AQUÍ! -----
+'''
 def create_db_and_tables():
     # Propósito: Crea todas las tablas en la base de datos que están definidas por los modelos de SQLAlchemy.
     #            Esto se hace una vez al inicio de la aplicación si las tablas no existen.
@@ -30,4 +31,5 @@ def create_db_and_tables():
     print("Intentando crear tablas de base de datos...")
     Base.metadata.create_all(engine)
     print("Tablas de la base de datos creadas o actualizadas exitosamente.")
+    '''
 # ---------------------------------------------
