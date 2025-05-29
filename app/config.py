@@ -15,25 +15,31 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     # database_url (str): Cadena de conexión a la base de datos.
 
-    SECRET_KEY: str  # <-- ¡NUEVA LÍNEA!
+    SECRET_KEY: str 
     # secret_key (str): Clave secreta utilizada para firmar los tokens JWT.
     #                   Debe ser una cadena de texto larga y aleatoria.
 
-    ALGORITHM: str  # <-- ¡NUEVA LÍNEA!
+    ALGORITHM: str 
     # algorithm (str): Algoritmo de cifrado para los tokens JWT (por defecto HS256).
 
-    ACCESS_TOKEN_EXPIRE_MINUTES: int =30# <-- ¡NUEVA LÍNEA!
+    ACCESS_TOKEN_EXPIRE_MINUTES: int =30
     # access_token_expire_minutes (int): Tiempo de expiración del token de acceso en minutos.
 
-    # --- ¡NUEVAS VARIABLES PARA MARKETPLACES! ---
+    # --- VARIABLES PARA MARKETPLACES ---
     MERCADOLIBRE_APP_ID: str
     MERCADOLIBRE_SECRET_KEY: str
+    MERCADOLIBRE_AUTH_URL: str ="https://auth.mercadolibre.com/oauth/token"
+    MERCADOLIBRE_API_BASE_URL: str = "https://api.mercadolibre.com"
+    MERCADOLIBRE_REDIRECT_URI: str = "http://localhost:8000/integrations/configs/mercadolibre/callback" #"https://api.conexapi.com/ml/auth/callback"
 
-     # --- ¡NUEVAS VARIABLES PARA ERPs! ---
+
+     # ---VARIABLES PARA ERPs! ---
     SIIGO_CLIENT_ID: str # Si lo usas más adelante
     SIIGO_CLIENT_SECRET: str # Si lo usas más adelante
-
     SIIGO_PARTNER_ID: str = "conexapi"
+    SIIGO_AUTH_URL:str =  "https://siigoapi.postman.co/auth" # URL del mock de Siigo o sandbox real
+    SIIGO_API_BASE_URL:str =  "https://siigoapi.postman.co/V1" # URL del mock de Siigo o sandbox real
+
     # --------------------------------------------
 
 
@@ -41,5 +47,5 @@ class Settings(BaseSettings):
         env_file=".env",
         extra="ignore"
     )
-
+# Instanciamos la configuración para que pueda ser importada y usada en toda la aplicación.
 settings = Settings()
