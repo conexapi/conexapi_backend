@@ -92,6 +92,14 @@ class IntegrationConfig(Base):
     ml_access_token = Column(String, nullable=True)
     ml_refresh_token = Column(String, nullable=True)
     ml_token_expires_at = Column(DateTime, nullable=True) # Cuándo expira el access_token de ML
+
+    # --- ¡NUEVO CAMPO PARA EL INTERVALO DE REFRESCO PERSONALIZABLE! ---
+    # refresh_interval_minutes (Integer): Frecuencia deseada para refrescar el token en minutos.
+    #                                    Valor por defecto razonable (ej. 1430 minutos = 23 horas y 50 minutos
+    #                                    para un token de 24 horas, dando un margen).
+    #                                    El cliente puede ajustar esto.
+    refresh_interval_minutes = Column(Integer, default=1430, nullable=False)
+
     
     is_active = Column(Boolean, default=True) # Para activar/desactivar la integración
     created_at = Column(DateTime, default=datetime.now(timezone.utc), nullable=False)

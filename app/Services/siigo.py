@@ -1,4 +1,9 @@
 # Ubicación: /conexapi/conexapi_backend/app/services/siigo.py
+# Propósito: Contiene las funciones de servicio para interactuar con la API de Siigo,
+#            incluyendo la obtención de tokens y la manipulación de documentos y productos.
+# Dependencias: requests, sqlalchemy.orm.Session, app.database.models, app.crud.integration,
+#               app.schemas.integration, app.config
+
 
 import requests
 from typing import Optional, Dict, Any, List, cast
@@ -8,7 +13,7 @@ from sqlalchemy.orm import Session
 from app.database import models
 from app.crud import integration as crud_integration
 from app.schemas import integration as schemas_integration
-from app.config import settings
+from app.config import settings # Importamos settings para acceder a las URLs de la configuración
 
 # --- FUNCIONES DE AUTENTICACIÓN/OBTENCIÓN DE TOKENS PARA SIIGO ---
 
@@ -17,7 +22,16 @@ def get_siigo_token(db: Session, config: models.IntegrationConfig) -> Optional[m
     Obtiene un token de acceso para Siigo Cloud.
     Utiliza las credenciales de la aplicación (client_id y client_secret) desde app.config
     y las credenciales de la cuenta del cliente (username y access_key) desde la config.
+    
+     Parámetros:
+      - db (Session): La sesión de base de datos actual.
+      - config (models.IntegrationConfig): El objeto de configuración de integración de Siigo
+                                          que contiene las credenciales del cliente (username, access_key).
+    Retorno:
+      - Optional[models.IntegrationConfig]: El objeto de configuración actualizado con los tokens,
+                                            o None si la autenticación falla.
     """
+
     client_id_val = settings.SIIGO_CLIENT_ID
     client_secret_val = settings.SIIGO_CLIENT_SECRET
     partner_id_val = settings.SIIGO_PARTNER_ID
@@ -33,19 +47,21 @@ def get_siigo_token(db: Session, config: models.IntegrationConfig) -> Optional[m
         return None
     
     # IMPORTANTE: Cambiar la URL al servidor mock de Apiary
-    token_url = "https://private-anon-89daf21a6f-siigoapi.apiary-mock.com/auth" # <-- ¡CAMBIO AQUÍ!
+    token_url = f"{settings.SIIGO_AUTH_URL}/connect/token"
+
     headers = {
-        "Content-Type": "application/json",
-        "Partner-ID": partner_id_val
+        "Accept": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "partner_id": partner_id_val
     }
     data = {
+        "client_id": client_id_val,
+        "client_secret": client_secret_val,
+        "scope": "offline_access", # Siigo usa "offline_access" para tokens de refresco
+        "grant_type": "password",  # Siigo usa "password" grant type para username/access_key
         "username": username_value,
-        "access_key": access_key_value,
-        # En el mock, client_id y client_secret no son necesarios para la autenticación en el body
-        # Sin embargo, si tu Siigo real los requiere, los dejaríamos aquí.
-        # Por ahora, para el mock, el ejemplo solo usa username y access_key.
-        # client_id": client_id_val,
-        # client_secret": client_secret_val
+        "password": access_key_value, # En Siigo, el "access_key" actúa como la contraseña para este grant type
+        
     }
 
     try:
