@@ -1,7 +1,7 @@
 # Ubicación: /conexapi/conexapi_backend/app/services/mercadolibre.py
 
 import requests
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, cast
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
@@ -18,7 +18,7 @@ def refresh_mercadolibre_token(db: Session, config: models.IntegrationConfig) ->
     Utiliza las credenciales de la aplicación (app_id y secret_key) desde app.config.
     """
     refresh_token_value = config.ml_refresh_token
-    if refresh_token_value is None or refresh_token_value == "":
+    if refresh_token_value is None or cast(str, refresh_token_value) == "": 
         print(f"Error: No refresh token found or it is empty for Mercado Libre config {config.id}")
         return None
 
@@ -45,9 +45,9 @@ def refresh_mercadolibre_token(db: Session, config: models.IntegrationConfig) ->
             ml_token_expires_at=datetime.now(timezone.utc) + timedelta(seconds=token_data.get("expires_in", 3600))
         )
 
-        # Aquí, el argumento para update_integration_config debe ser config_update_data
-        updated_config = crud_integration.update_integration_config(db, config.id, config_update_data=update_schema)
-        if not updated_config:
+      # CORRECCIÓN USANDO CAST para config.id en mercadolibre.py
+        updated_config = crud_integration.update_integration_config(db, cast(int, config.id), config_update_data=update_schema)
+        if updated_config is None:
             print(f"Advertencia: No se pudo actualizar la configuración de Mercado Libre {config.id} en la base de datos.")
         return updated_config
 
@@ -67,7 +67,8 @@ def is_mercadolibre_token_expired(config: models.IntegrationConfig) -> bool:
         return True
 
     safety_margin = timedelta(minutes=5)
-    return datetime.now(timezone.utc) + safety_margin >= config.ml_token_expires_at
+     # ¡CORRECCIÓN AQUÍ CON CAST!
+    return cast(bool, datetime.now(timezone.utc) + safety_margin >= config.ml_token_expires_at)
 
 # --- FUNCIONES DE INTERACCIÓN CON LA API DE MERCADO LIBRE (REALES) ---
 

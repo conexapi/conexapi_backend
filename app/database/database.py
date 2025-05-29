@@ -9,7 +9,7 @@ from app.config import settings
 from app.database.models import Base # <-- ¡NUEVA LÍNEA! Importa Base
 
 engine = create_engine(
-    settings.database_url,
+    settings.DATABASE_URL,
     echo=True
 )
 
