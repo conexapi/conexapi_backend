@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     SIIGO_CLIENT_ID: str # Si lo usas más adelante
     SIIGO_CLIENT_SECRET: str # Si lo usas más adelante
 
-    SIIGO_PARTNER_ID: str = "conexapiIntegracion"
+    SIIGO_PARTNER_ID: str = "conexapi"
     # --------------------------------------------
 
 
