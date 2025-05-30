@@ -115,6 +115,16 @@ async def update_integration_config(
            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Configuración no encontrada después de la actualización (posible error interno)")
     return updated_config
 
+# ... (código existente) ...
+
+# Endpoint para activar una configuración de integración
+@router.post(
+    "/configs/{config_id}/activate",
+    response_model=schemas_integration.IntegrationConfigInDB, # O el schema de respuesta que consideres adecuado
+    summary="Activa una configuración de integración y obtiene tokens externos si aplica (solo administradores)",
+    response_description="Configuración activada y tokens externos obtenidos exitosamente."
+)
+
 
 async def activate_integration_config(
     config_id: int,
