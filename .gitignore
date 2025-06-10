@@ -31,5 +31,13 @@ env/
 
 # Misc
 .DS_Store
+.crt
+.env
+.cert/
+.certs/
+*.pem
+*.key
+test_env.py
+
 
 

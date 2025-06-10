@@ -10,6 +10,8 @@ pydantic==2.5.2
 pydantic-settings==2.1.0
 
 # Database
+mysql-connector-python==9.0.0 #para conectar a MySQL
+pymysql
 sqlalchemy==2.0.25
 alembic==1.13.1
 aiomysql==0.2.0          # Cliente asincrónico, compatible con SQLAlchemy 2 y async
