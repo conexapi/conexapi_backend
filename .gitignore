@@ -40,5 +40,13 @@ env/
 test_env.py
 requirements-dev.txt
 
+# Dependencias de desarrollo
+*.egg-info/
+coverage.*
+htmlcov/
+.cache/
+.mypy_cache/
+.pytest_cache/
+
 
 
