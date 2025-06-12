@@ -1,13 +1,15 @@
-# ┌─────────────────────────────────────────────────────────────────────────────┐
-# │ 📁 Ubicación: conexapi_backend/app/db/base.py                               │
-# │ 📄 Archivo: base.py                                                         │
-# └─────────────────────────────────────────────────────────────────────────────┘
-# 🎯 Objetivo: Definir la clase base de modelos SQLAlchemy (declarative_base)
-# utilizada por todos los modelos ORM del proyecto.
-# 📌 Estado: Base inicial lista y funcional.
+# ┌──────────────────────────────────────────────────────────────────┐
+# │ 📁 Ubicación: conexapi_backend/app/db/base.py                    │
+# │ 📄 Archivo: base.py                                              │
+# └──────────────────────────────────────────────────────────────────┘
+# 🎯 Objetivo: Centralizar metadata y registros de modelos SQLAlchemy
+# 📌 Estado: Versión corregida sin import circular.
 
-#Este archivo ya permite que todos tus modelos (como ErpConfig) hereden de una misma base y puedan ser reconocidos por el sistema de migraciones y sesión.
+from sqlalchemy.orm import DeclarativeBase
 
-from sqlalchemy.orm import declarative_base
+class Base(DeclarativeBase):
+    pass
 
-Base = declarative_base()
+# ✅ Importa aquí todos los modelos que se deben registrar en Alembic
+# Pero HAZ ESTO DESPUÉS de definir `Base` (y no dentro de los modelos)
+from app.db.models import erp  # 👈 Esto ya es seguro
